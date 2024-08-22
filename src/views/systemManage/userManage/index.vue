@@ -3,17 +3,45 @@
     <vab-query-form>
       <vab-query-form-left-panel>
         <el-button icon="el-icon-plus" type="primary" @click="handleAdd">添加</el-button>
-        <el-button icon="el-icon-delete" type="danger" @click="handleDelete">删除</el-button>
-        <el-button type="primary" @click="testMessage">baseMessage</el-button>
-        <el-button type="primary" @click="testALert">baseAlert</el-button>
-        <el-button type="primary" @click="testConfirm">baseConfirm</el-button>
-        <el-button type="primary" @click="testNotify">baseNotify</el-button>
+        <el-button icon="el-icon-download" type="success" @click="handleExport">获取导入模板</el-button>
+        <el-upload
+          ref="upload"
+          accept=".xlsx, .xls"
+          action="/health/user/add/multiple"
+          :headers="uploadHeaders"
+          :limit="1"
+          :on-success="handleUploadSuccess"
+          :show-file-list="false"
+        >
+          <el-button slot="trigger" size="small" type="primary">批量导入用户</el-button>
+        </el-upload>
       </vab-query-form-left-panel>
       <vab-query-form-right-panel>
-        <el-form ref="form" :inline="true" :model="queryForm" @submit.native.prevent>
-          <el-form-item>
-            <el-input v-model="queryForm.title" placeholder="标题" />
-          </el-form-item>
+        <el-form ref="form" class="list-form" :inline="true" :model="queryForm" @submit.native.prevent>
+          <el-col :span="4">
+            <el-form-item>
+              <el-input v-model="queryForm.data.userName" placeholder="姓名" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="5">
+            <el-form-item>
+              <el-input v-model="queryForm.data.userPhone" placeholder="手机号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="5">
+            <el-form-item>
+              <el-input v-model="queryForm.data.userIdCard" placeholder="身份证号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item>
+              <el-select v-model="queryForm.data.userGender" placeholder="性别">
+                <el-option label="所有性别" value="" />
+                <el-option label="男" value="1" />
+                <el-option label="女" value="0" />
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-form-item>
             <el-button icon="el-icon-search" native-type="submit" type="primary" @click="handleQuery">查询</el-button>
           </el-form-item>
@@ -45,11 +73,26 @@
       </el-table-column>
       <el-table-column label="手机号" prop="userPhone" show-overflow-tooltip sortable />
       <el-table-column label="身份证号" prop="userIdCard" show-overflow-tooltip />
-      <el-table-column label="时间" prop="datetime" show-overflow-tooltip width="200" />
+      <el-table-column label="是否删除" prop="userIsDeleted" show-overflow-tooltip>
+        <template #default="scope">
+          <el-tag v-if="scope.row.userIsDeleted == 0">未删除</el-tag>
+          <el-tag v-else type="danger">已删除</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="年龄" prop="userBirthday" show-overflow-tooltip>
+        <template #default="{ row }">
+          <el-tag v-if="row.userBirthday" type="success">{{ calculateAge(row.userBirthday) }}岁</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" show-overflow-tooltip width="180px">
         <template #default="{ row }">
-          <el-button type="text" @click="handleEdit(row)">编辑</el-button>
-          <el-button type="text" @click="handleDelete(row)">删除</el-button>
+          <template v-if="row.userIsDeleted == 0">
+            <el-button type="text" @click="handleEdit(row)">编辑</el-button>
+            <!-- <el-button type="text" @click="handleDelete(row)">删除</el-button> -->
+          </template>
+          <template v-else>
+            <!-- <el-button type="text" @click="handleRestore(row)">恢复</el-button> -->
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -62,14 +105,16 @@
       @current-change="handleCurrentChange"
       @size-change="handleSizeChange"
     />
-    <table-edit ref="edit" />
+    <table-edit ref="edit" @fetch-data="fetchData" />
   </div>
 </template>
 
 <script>
   import { doDelete } from '@/api/table'
   import TableEdit from './components/TableEdit'
-  import { getUsers } from '../../../api/userMange'
+  import { getUsers, getUserTemplate } from '@/api/userManage'
+  import { calculateAge } from '@/utils'
+  import fileDowload from 'js-file-download'
 
   export default {
     name: 'ComprehensiveTable',
@@ -88,6 +133,7 @@
     },
     data() {
       return {
+        calculateAge: calculateAge,
         imgShow: true,
         list: [],
         imageList: [],
@@ -100,7 +146,15 @@
         queryForm: {
           pageNo: 1,
           pageSize: 10,
-          data: {},
+          data: {
+            userName: '',
+            userPhone: '',
+            userIdCard: '',
+            userGender: '',
+          },
+        },
+        uploadHeaders: {
+          token: this.$store.state.user.accessToken,
         },
         timeOutID: null,
       }
@@ -137,13 +191,13 @@
       handleDelete(row) {
         if (row.id) {
           this.$baseConfirm('你确定要删除当前项吗', null, async () => {
-            const { msg } = await doDelete({ ids: row.id })
+            const { msg } = await doDelete({ ids: row.userId })
             this.$baseMessage(msg, 'success')
             this.fetchData()
           })
         } else {
           if (this.selectRows.length > 0) {
-            const ids = this.selectRows.map((item) => item.id).join()
+            const ids = this.selectRows.map((item) => item.userId).join()
             this.$baseConfirm('你确定要删除选中项吗', null, async () => {
               const { msg } = await doDelete({ ids: ids })
               this.$baseMessage(msg, 'success')
@@ -171,51 +225,25 @@
         this.listLoading = true
         const { data, count } = await getUsers(this.queryForm)
         this.list = data
-        const imageList = []
-        data.forEach((item, index) => {
-          imageList.push(item.img)
-        })
-        this.imageList = imageList
         this.total = count
         this.timeOutID = setTimeout(() => {
           this.listLoading = false
         }, 500)
       },
-      testMessage() {
-        this.$baseMessage('test1', 'success')
+      async handleExport() {
+        const data = await getUserTemplate()
+        fileDowload(data, '用户模板.xlsx')
       },
-      testALert() {
-        this.$baseAlert('11')
-        this.$baseAlert('11', '自定义标题', () => {
-          /* 可以写回调; */
-        })
-        this.$baseAlert('11', null, () => {
-          /* 可以写回调; */
-        })
-      },
-      testConfirm() {
-        this.$baseConfirm(
-          '你确定要执行该操作?',
-          null,
-          () => {
-            /* 可以写回调; */
-          },
-          () => {
-            /* 可以写回调; */
-          }
-        )
-      },
-      testNotify() {
-        this.$baseNotify('测试消息提示', 'test', 'success', 'bottom-right')
+      handleUploadSuccess(res, file, fileList) {
+        const { msg, code } = res
+        this.$baseMessage(msg, code == 0 ? 'success' : 'error')
+        this.$refs['upload'].clearFiles()
       },
     },
   }
 </script>
 <style scoped>
-  .male {
-    color: #409eff;
-  }
-  .female {
-    color: pink;
+  .xx-input {
+    padding: 0;
   }
 </style>

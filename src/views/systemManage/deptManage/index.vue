@@ -4,15 +4,11 @@
       <vab-query-form-left-panel>
         <el-button icon="el-icon-plus" type="primary" @click="handleAdd">添加</el-button>
         <el-button icon="el-icon-delete" type="danger" @click="handleDelete">删除</el-button>
-        <el-button type="primary" @click="testMessage">baseMessage</el-button>
-        <el-button type="primary" @click="testALert">baseAlert</el-button>
-        <el-button type="primary" @click="testConfirm">baseConfirm</el-button>
-        <el-button type="primary" @click="testNotify">baseNotify</el-button>
       </vab-query-form-left-panel>
       <vab-query-form-right-panel>
         <el-form ref="form" :inline="true" :model="queryForm" @submit.native.prevent>
           <el-form-item>
-            <el-input v-model="queryForm.title" placeholder="标题" />
+            <el-input v-model="queryForm.data.deptName" placeholder="请输入部门名称进行查询" />
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" native-type="submit" type="primary" @click="handleQuery">查询</el-button>
@@ -36,28 +32,22 @@
           {{ scope.$index + 1 }}
         </template>
       </el-table-column>
-      <el-table-column label="标题" prop="title" show-overflow-tooltip />
-      <el-table-column label="作者" prop="author" show-overflow-tooltip />
-      <el-table-column label="头像" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-image v-if="imgShow" :preview-src-list="imageList" :src="row.img" />
+      <el-table-column label="科室名称" prop="deptName" show-overflow-tooltip />
+      <el-table-column label="是否删除" prop="deptIsDeleted" show-overflow-tooltip>
+        <template #default="scope">
+          <el-tag v-if="scope.row.deptIsDeleted == 0">未删除</el-tag>
+          <el-tag v-else type="danger">已删除</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="点击量" prop="pageViews" show-overflow-tooltip sortable />
-      <el-table-column label="状态" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-tooltip class="item" :content="row.status" effect="dark" placement="top-start">
-            <el-tag :type="row.status | statusFilter">
-              {{ row.status }}
-            </el-tag>
-          </el-tooltip>
-        </template>
-      </el-table-column>
-      <el-table-column label="时间" prop="datetime" show-overflow-tooltip width="200" />
       <el-table-column label="操作" show-overflow-tooltip width="180px">
         <template #default="{ row }">
-          <el-button type="text" @click="handleEdit(row)">编辑</el-button>
-          <el-button type="text" @click="handleDelete(row)">删除</el-button>
+          <template v-if="row.deptIsDeleted == 0">
+            <el-button type="text" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="text" @click="handleDelete(row)">删除</el-button>
+          </template>
+          <template v-else>
+            <el-button type="text" @click="handleRestore(row)">恢复</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -70,13 +60,14 @@
       @current-change="handleCurrentChange"
       @size-change="handleSizeChange"
     />
-    <table-edit ref="edit" />
+    <table-edit ref="edit" @fetch-data="fetchData" />
   </div>
 </template>
 
 <script>
-  import { doDelete, getList } from '@/api/table'
+  import { doDelete } from '@/api/table'
   import TableEdit from './components/TableEdit'
+  import { delDept, getDepts } from '../../../api/deptManage'
 
   export default {
     name: 'ComprehensiveTable',
@@ -106,8 +97,10 @@
         elementLoadingText: '正在加载...',
         queryForm: {
           pageNo: 1,
-          pageSize: 20,
-          title: '',
+          pageSize: 10,
+          data: {
+            deptName: '',
+          },
         },
         timeOutID: null,
       }
@@ -144,15 +137,15 @@
       handleDelete(row) {
         if (row.id) {
           this.$baseConfirm('你确定要删除当前项吗', null, async () => {
-            const { msg } = await doDelete({ ids: row.id })
+            const { msg } = await delDept({ ids: row.deptId })
             this.$baseMessage(msg, 'success')
             this.fetchData()
           })
         } else {
           if (this.selectRows.length > 0) {
-            const ids = this.selectRows.map((item) => item.id).join()
+            const ids = this.selectRows.map((item) => item.deptId)
             this.$baseConfirm('你确定要删除选中项吗', null, async () => {
-              const { msg } = await doDelete({ ids: ids })
+              const { msg } = await delDept({ ids: ids })
               this.$baseMessage(msg, 'success')
               this.fetchData()
             })
@@ -176,14 +169,9 @@
       },
       async fetchData() {
         this.listLoading = true
-        const { data, totalCount } = await getList(this.queryForm)
+        const { data, count } = await getDepts(this.queryForm)
         this.list = data
-        const imageList = []
-        data.forEach((item, index) => {
-          imageList.push(item.img)
-        })
-        this.imageList = imageList
-        this.total = totalCount
+        this.total = count
         this.timeOutID = setTimeout(() => {
           this.listLoading = false
         }, 500)

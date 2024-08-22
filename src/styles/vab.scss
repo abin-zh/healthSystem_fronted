@@ -110,9 +110,9 @@ html {
       backdrop-filter: blur(10px);
     }
 
-    .el-tag + .el-tag {
-      margin-left: 10px;
-    }
+    // .el-tag + .el-tag {
+    //   margin-left: 10px;
+    // }
 
     .editor-toolbar {
       .no-mobile,
@@ -224,9 +224,9 @@ html {
       &__body {
         border-top: 1px solid $base-border-color;
 
-        .el-form {
-          padding-right: 30px;
-        }
+        // .el-form {
+        //   padding-right: 30px;
+        // }
       }
 
       &__footer {

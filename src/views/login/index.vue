@@ -6,7 +6,7 @@
     <el-col class="login-box" :sm="10" :xs="24">
       <div class="login-form">
         <h1>{{ $store.state.settings.title }}</h1>
-        <b>登录到后台以管理一卡通系统数据</b>
+        <b>登录到后台以管理系统</b>
         <el-form ref="loginForm" label-position="top" :model="loginForm" :rules="loginRules">
           <el-form-item label="用户名" prop="username">
             <el-input v-model="loginForm.username" placeholder="请输入用户名" size="primary" type="text" />
@@ -22,6 +22,7 @@
               <el-button v-loading="codeLoading" class="code-button" :disabled="codeDisabled" type="primary" @click="getCode">
                 {{ !codeButtonTitle ? '获取验证码' : codeButtonTitle }}
               </el-button>
+              <!-- <el-image @click="reloadCode" :src="codeImgUrl"></el-image> -->
             </el-col>
           </el-form-item>
           <el-form-item>

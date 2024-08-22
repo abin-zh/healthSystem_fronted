@@ -1,11 +1,8 @@
 <template>
   <el-dialog :title="title" :visible.sync="dialogFormVisible" width="500px" @close="close">
     <el-form ref="form" label-width="80px" :model="form" :rules="rules">
-      <el-form-item label="标题" prop="title">
-        <el-input v-model.trim="form.title" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="作者" prop="author">
-        <el-input v-model.trim="form.author" autocomplete="off" />
+      <el-form-item label="科室名称" prop="deptName">
+        <el-input v-model.trim="form.deptName" autocomplete="off" />
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
@@ -16,19 +13,17 @@
 </template>
 
 <script>
-  import { doEdit } from '@/api/table'
+  import { editDept } from '@/api/deptManage'
 
   export default {
     name: 'TableEdit',
     data() {
       return {
         form: {
-          title: '',
-          author: '',
+          deptName: '',
         },
         rules: {
-          title: [{ required: true, trigger: 'blur', message: '请输入标题' }],
-          author: [{ required: true, trigger: 'blur', message: '请输入作者' }],
+          deptName: [{ required: true, trigger: 'blur', message: '请输入科室名称' }],
         },
         title: '',
         dialogFormVisible: false,
@@ -40,8 +35,10 @@
         if (!row) {
           this.title = '添加'
         } else {
+          console.log('编辑')
           this.title = '编辑'
           this.form = Object.assign({}, row)
+          console.log(this.form)
         }
         this.dialogFormVisible = true
       },
@@ -54,7 +51,7 @@
       save() {
         this.$refs['form'].validate(async (valid) => {
           if (valid) {
-            const { msg } = await doEdit(this.form)
+            const { msg } = await editDept(this.form)
             this.$baseMessage(msg, 'success')
             this.$refs['form'].resetFields()
             this.dialogFormVisible = false

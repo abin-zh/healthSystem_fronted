@@ -3,22 +3,8 @@
     <vab-query-form>
       <vab-query-form-left-panel>
         <el-button icon="el-icon-plus" type="primary" @click="handleAdd">添加</el-button>
-        <el-button icon="el-icon-delete" type="danger" @click="handleDelete">删除</el-button>
-        <el-button type="primary" @click="testMessage">baseMessage</el-button>
-        <el-button type="primary" @click="testALert">baseAlert</el-button>
-        <el-button type="primary" @click="testConfirm">baseConfirm</el-button>
-        <el-button type="primary" @click="testNotify">baseNotify</el-button>
       </vab-query-form-left-panel>
-      <vab-query-form-right-panel>
-        <el-form ref="form" :inline="true" :model="queryForm" @submit.native.prevent>
-          <el-form-item>
-            <el-input v-model="queryForm.title" placeholder="标题" />
-          </el-form-item>
-          <el-form-item>
-            <el-button icon="el-icon-search" native-type="submit" type="primary" @click="handleQuery">查询</el-button>
-          </el-form-item>
-        </el-form>
-      </vab-query-form-right-panel>
+      <vab-query-form-right-panel />
     </vab-query-form>
 
     <el-table
@@ -36,28 +22,33 @@
           {{ scope.$index + 1 }}
         </template>
       </el-table-column>
-      <el-table-column label="标题" prop="title" show-overflow-tooltip />
-      <el-table-column label="作者" prop="author" show-overflow-tooltip />
-      <el-table-column label="头像" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-image v-if="imgShow" :preview-src-list="imageList" :src="row.img" />
+      <el-table-column label="姓名" prop="staffName" show-overflow-tooltip />
+      <el-table-column label="账号" prop="staffAccount" show-overflow-tooltip />
+      <el-table-column label="所属科室" show-overflow-tooltip>
+        <template #default="scope">
+          {{ scope.row.deptName }}
         </template>
       </el-table-column>
-      <el-table-column label="点击量" prop="pageViews" show-overflow-tooltip sortable />
-      <el-table-column label="状态" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-tooltip class="item" :content="row.status" effect="dark" placement="top-start">
-            <el-tag :type="row.status | statusFilter">
-              {{ row.status }}
-            </el-tag>
-          </el-tooltip>
+      <el-table-column label="所属角色" show-overflow-tooltip>
+        <template #default="scope">
+          {{ scope.row.roleName }}
         </template>
       </el-table-column>
-      <el-table-column label="时间" prop="datetime" show-overflow-tooltip width="200" />
+      <el-table-column label="是否活跃" prop="itemIsDeleted" show-overflow-tooltip>
+        <template #default="scope">
+          <el-tag v-if="scope.row.staffIsStatus == 1" type="success">活跃</el-tag>
+          <el-tag v-else type="warning">不活跃</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="是否删除" prop="itemIsDeleted" show-overflow-tooltip>
+        <template #default="scope">
+          <el-tag v-if="scope.row.staffIsDeleted == 0">未删除</el-tag>
+          <el-tag v-else type="danger">已删除</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" show-overflow-tooltip width="180px">
         <template #default="{ row }">
           <el-button type="text" @click="handleEdit(row)">编辑</el-button>
-          <el-button type="text" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -70,12 +61,12 @@
       @current-change="handleCurrentChange"
       @size-change="handleSizeChange"
     />
-    <table-edit ref="edit" />
+    <table-edit ref="edit" @fetch-data="fetchData" />
   </div>
 </template>
 
 <script>
-  import { doDelete, getList } from '@/api/table'
+  import { getStaffs } from '@/api/staffManage'
   import TableEdit from './components/TableEdit'
 
   export default {
@@ -176,7 +167,7 @@
       },
       async fetchData() {
         this.listLoading = true
-        const { data, totalCount } = await getList(this.queryForm)
+        const { data, totalCount } = await getStaffs(this.queryForm)
         this.list = data
         const imageList = []
         data.forEach((item, index) => {

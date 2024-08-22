@@ -240,3 +240,59 @@ export const off = (function () {
     }
   }
 })()
+
+/**
+ * 计算年龄
+ * @param birthDate 生日时间戳
+ * @returns
+ */
+export const calculateAge = (birthDate) => {
+  const today = new Date()
+  birthDate = new Date(birthDate)
+  let age = today.getFullYear() - birthDate.getFullYear()
+  let m = today.getMonth() - birthDate.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+  return age
+}
+
+/**
+ * 格式化日期或日期时间
+ * @param {*} timestamp 时间戳
+ * @param {*} type 格式化类型(date, datetime) 默认date
+ * @returns
+ */
+export const formatTimestamp = (timestamp, type = 'date') => {
+  // 创建 Date 对象
+  const date = new Date(timestamp)
+
+  // 获取各个部分
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  // 格式化输出
+  const formattedDate = `${year}-${month}-${day}`
+  const formattedTime = `${hours}:${minutes}:${seconds}`
+
+  return type == 'date' ? formattedDate : `${formattedDate} ${formattedTime}`
+}
+
+/**
+ * 统计年龄段(图标数据)
+ * @param ageList
+ * @returns
+ */
+export const ageGroupStatistics = (ageList) => {
+  return [
+    { value: ageList.filter((age) => age >= 5 && age <= 11).length, name: '儿童' },
+    { value: ageList.filter((age) => age >= 12 && age <= 18).length, name: '少年' },
+    { value: ageList.filter((age) => age >= 19 && age <= 35).length, name: '青年' },
+    { value: ageList.filter((age) => age >= 36 && age <= 59).length, name: '中年' },
+    { value: ageList.filter((age) => age >= 60).length, name: '老年' },
+  ]
+}

@@ -10,3 +10,21 @@
     mounted() {},
   }
 </script>
+<style>
+  .transfer-title {
+    margin-top: 0;
+  }
+  .list-form {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .tag {
+    margin-right: 4px;
+  }
+  .male {
+    color: #409eff;
+  }
+  .female {
+    color: pink;
+  }
+</style>

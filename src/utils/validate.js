@@ -1,3 +1,5 @@
+import verifyCardNum from './idCardValidate/idCardVerify'
+
 /**
  * @author zxwk1998  （不想保留author可删除）
  * @description 判读是否为外链
@@ -42,12 +44,41 @@ export function isArray(arg) {
 }
 
 /**
- * @author zxwk1998  （不想保留author可删除）
+ * @author https://github.com/VincentSit/ChinaMobilePhoneNumberRegex/blob/master/README-CN.md
  * @description 判断是否是手机号
  * @param str
  * @returns {boolean}
  */
 export function isPhone(str) {
-  const reg = /^1\d{10}$/
+  const reg =
+    /^(?:\+?86)?1(?:3\d{3}|5[^4\D]\d{2}|8\d{3}|7(?:[0-35-9]\d{2}|4(?:0\d|1[0-2]|9\d))|9[0-35-9]\d{2}|6[2567]\d{2}|4(?:(?:10|4[01])\d{3}|[68]\d{4}|[579]\d{2}))\d{6}$/
   return reg.test(str)
+}
+
+export const validPrice = (rule, value, callback) => {
+  if (isNaN(value) || value < 0) {
+    callback(new Error('价格需要正数值'))
+  } else {
+    callback()
+  }
+}
+
+export const validPhone = (rule, value, callback) => {
+  if (isNaN(value)) {
+    callback(new Error('请输入数字'))
+  } else if (!isPhone(value)) {
+    callback(new Error('请输入正确的手机号'))
+  } else {
+    callback()
+  }
+}
+
+export const validIdCard = (rule, value, callback) => {
+  if (isNaN(value)) {
+    callback(new Error('请输入数字'))
+  } else if (!verifyCardNum(value)) {
+    callback(new Error('请输入正确的身份证号'))
+  } else {
+    callback()
+  }
 }

@@ -64,7 +64,6 @@ const actions = {
     //permissions为authentication: 'intelligence', 由前端控制菜单
     // authentication: 'all', 由后端控制菜单，通过/menu/navigate获取后端菜单
     let { permissions, username, avatar } = data
-    avatar = 'https://pic.imgdb.cn/item/658ea07dc458853aef163552.jpg'
     permissions = ['admin', 'editor']
     if (permissions && username && Array.isArray(permissions)) {
       commit('setPermissions', permissions)
@@ -77,7 +76,6 @@ const actions = {
     }
   },
   async logout({ dispatch }) {
-    await logout(state.accessToken)
     await dispatch('resetAccessToken')
     await resetRouter()
   },
