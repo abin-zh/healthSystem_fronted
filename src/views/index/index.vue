@@ -12,6 +12,17 @@
           </div>
         </el-card>
       </el-col>
+      <el-col :lg="6" :md="12" :sm="24" :xl="6" :xs="24">
+        <el-card shadow="never">
+          <div slot="header">
+            <span>体检月成交额</span>
+          </div>
+          <vab-chart ref="chart" autoresize :option="amountGroup" />
+          <div class="bottom">
+            <span>总成交额: {{ amountGroupLength }}元</span>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
   </div>
 </template>
@@ -21,6 +32,7 @@
   import { dependencies, devDependencies } from '../../../package.json'
   import { calculateAge, ageGroupStatistics } from '@/utils'
   import { getUsers } from '@/api/userManage'
+  import { getMonthOrderTotalAmount } from '@/api/billManage'
 
   export default {
     name: 'Index',
@@ -35,6 +47,7 @@
         dependencies: dependencies,
         devDependencies: devDependencies,
         ageGroupLength: 0,
+        amountGroupLength: 0,
         ageGroup: {
           tooltip: {
             trigger: 'item',
@@ -70,6 +83,34 @@
             },
           ],
         },
+        amountGroup: {
+          tooltip: {
+            trigger: 'axis',
+          },
+          grid: {
+            top: '4%',
+            left: '2%',
+            right: '4%',
+            bottom: '0%',
+            containLabel: true,
+          },
+          xAxis: {
+            type: 'category',
+            data: [],
+          },
+          yAxis: {
+            type: 'value',
+            min: 0,
+            max: 'dataMax',
+          },
+          series: [
+            {
+              name: '成交额',
+              data: [],
+              type: 'line',
+            },
+          ],
+        },
       }
     },
     created() {
@@ -92,8 +133,10 @@
           pageSize: 0,
           data: {},
         })
+        const amountRes = await getMonthOrderTotalAmount()
         this.ageGroupLength = userRes.data.length
         this.filterAgeGroup(userRes.data)
+        this.filterAmountGroup(amountRes.data)
       },
       filterAgeGroup(data) {
         //映射出年龄集合
@@ -102,6 +145,11 @@
         ageList = ageList.filter((age) => !isNaN(age))
 
         this.ageGroup.series[0].data = ageGroupStatistics(ageList)
+      },
+      filterAmountGroup(data) {
+        this.amountGroup.xAxis.data = data.map((item) => item.month)
+        this.amountGroup.series[0].data = data.map((item) => item.orderTotalAmount)
+        this.amountGroupLength = data.reduce((sum, item) => sum + item.orderTotalAmount, 0)
       },
     },
   }

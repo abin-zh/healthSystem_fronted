@@ -74,9 +74,18 @@ export function getAllOrderProjects(data) {
   })
 }
 
+//编辑体检总结
 export function editCheckupResult(data) {
   return request({
     url: `${module}/chief/checkup/edit`,
+    method: 'post',
+    data,
+  })
+}
+
+export function getMonthOrderTotalAmount(data) {
+  return request({
+    url: `${module}/amount/month`,
     method: 'post',
     data,
   })

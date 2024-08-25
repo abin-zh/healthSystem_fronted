@@ -82,7 +82,7 @@
           userIdCard: [
             { required: true, trigger: 'blur', message: '请输入身份证号' },
             { min: 18, max: 18, message: '请输入18位身份证号' },
-            // { validator: validIdCard, trigger: 'blur' }, //生产环境下需启用
+            { validator: validIdCard, trigger: 'blur' }, //生产环境下需启用
           ],
           userName: [
             { required: true, trigger: 'blur', message: '请输入姓名' },

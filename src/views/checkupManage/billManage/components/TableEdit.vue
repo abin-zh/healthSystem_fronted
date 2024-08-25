@@ -133,14 +133,11 @@
     },
     methods: {
       showEdit(row) {
-        this.step = 0
         if (row) {
           this.title = '开单'
-          this.btnTitle = '下一步'
-          this.choosePackageList = []
           this.form = Object.assign({}, row)
         }
-        this.fetchData('package')
+        this.preStep()
         this.dialogFormVisible = true
       },
       close() {
@@ -196,6 +193,7 @@
         this.btnTitle = '下一步'
         this.choosePackageList = []
         this.chooseProjectList = []
+        this.showProjectList = []
         this.fetchData('package')
       },
       handleShow(tag) {
