@@ -19,8 +19,6 @@
         pid="parentId"
         :title="['未选择菜单', '已选择菜单']"
         :to_data="toItemList"
-        @add-btn="handleAdd"
-        @remove-btn="handleRemove"
       />
     </el-form>
     <div slot="footer" class="dialog-footer">
@@ -86,13 +84,9 @@
       save() {
         this.$refs['form'].validate(async (valid) => {
           if (valid) {
-            //排除原来已有的菜单
-            this.itemAddIds = this.itemAddIds.filter((id) => this.toIds.indexOf(id) == -1)
-            //排除原来未有的菜单
-            this.itemRmIds = this.itemRmIds.filter((id) => this.toIds.indexOf(id) != -1)
-
-            this.form.itemAddIds = this.itemAddIds
-            this.form.itemRmIds = this.itemRmIds
+            const ids = []
+            this.getIds(ids, this.toItemList)
+            this.form.itemAddIds = ids
 
             const { msg } = await editRole(this.form)
             this.$baseMessage(msg, 'success')
@@ -107,19 +101,17 @@
       },
       async fetchData() {
         const { data } = await getMenus(this.form)
-        const { fromItems, toItems, toAllItems } = data
+        const { fromItems, toItems } = data
         this.fromItemList = fromItems ? fromItems : []
         this.toItemList = toItems ? toItems : []
-        //抽取已存在的id
-        this.toIds = toAllItems ? toAllItems.map((item) => item.id) : []
       },
-      handleAdd(fromData, toData, obj) {
-        this.itemAddIds = obj.keys
-        this.itemRmIds = this.itemRmIds.filter((id) => this.itemAddIds.indexOf(id) == -1)
-      },
-      handleRemove(fromData, toData, obj) {
-        this.itemRmIds = obj.keys
-        this.itemAddIds = this.itemAddIds.filter((id) => this.itemRmIds.indexOf(id) == -1)
+      getIds(ids, toData) {
+        for (let item of toData) {
+          ids.push(item.id)
+          if (item.children.length > 0) {
+            this.getIds(ids, item.children)
+          }
+        }
       },
     },
   }
